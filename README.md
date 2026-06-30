@@ -2,7 +2,7 @@
   <img src="public/logo.png" alt="Articordle logo" />
 </p>
 
-Articordle is a daily, Wordle-style guessing game for academic papers. You sign in with your Zotero account, pick a collection from your library, and each day you get a randomly chosen paper from that collection to identify. You read AI-generated clues and try to name the paper in five guesses or fewer.
+Articordle is a daily, Wordle-style guessing game for academic papers. You sign in with your Zotero account, pick a collection from your library, and each day you get a randomly chosen paper from that collection to identify. You read clues and try to name the paper in five guesses or fewer.
 
 It is a fun way to review your own reading list and test how well you really remember the papers you have saved.
 
