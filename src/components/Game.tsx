@@ -480,6 +480,15 @@ export default function Game({ username }: { username: string | null }) {
         >
           Sign out
         </button>
+        {" · Website managed by "}
+        <a
+          href="https://brendeneum.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline hover:text-foreground"
+        >
+          Brenden Eum
+        </a>
       </footer>
     </div>
   );
