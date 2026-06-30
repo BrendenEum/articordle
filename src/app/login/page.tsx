@@ -49,7 +49,11 @@ function LoginContent() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm rounded-2xl border border-border bg-surface p-8 text-center shadow-xl">
-        <h1 className="text-3xl font-bold tracking-tight">Articordle</h1>
+        <img
+          src="/logo.png"
+          alt="Articordle"
+          className="mx-auto h-16 w-auto"
+        />
         <p className="mt-2 text-sm text-muted">
           A daily game! Guess a random paper from your own Zotero library using
           five clues.
