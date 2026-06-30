@@ -16,9 +16,6 @@ export const metadata: Metadata = {
   title: "Articordle",
   description:
     "A daily Wordle-style game where you guess a random paper from your Zotero library.",
-  icons: {
-    icon: "/icon.png",
-  },
 };
 
 export default function RootLayout({
