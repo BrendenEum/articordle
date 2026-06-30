@@ -262,7 +262,7 @@ export default function Game({ username }: { username: string | null }) {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Articordle</h1>
           <p className="text-xs text-muted">
-            Guess today&rsquo;s paper from your Zotero library
+            Guess papers from your Zotero library
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -416,9 +416,6 @@ export default function Game({ username }: { username: string | null }) {
           >
             {resampling ? "Loading new paper…" : "Play again"}
           </button>
-          <p className="text-xs text-muted">
-            Samples a new paper from your collection.
-          </p>
         </div>
       )}
 
