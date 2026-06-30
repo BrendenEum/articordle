@@ -1,0 +1,120 @@
+// Prisma schema for Articordle
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// A player. Identified by their Zotero user id. We store an encrypted Zotero
+/// API key obtained via OAuth so we can read their library on their behalf.
+model User {
+  id                   String   @id @default(cuid())
+  zoteroUserId         String   @unique
+  username             String?
+  /// AES-256-GCM encrypted Zotero API key (format: iv:authTag:ciphertext, hex)
+  zoteroApiKeyEnc      String
+  /// The Zotero library the player plays from: "user" (personal) or "group".
+  /// Null means the personal library (back-compat).
+  selectedLibraryType  String?
+  /// The numeric id of the selected library (user id or group id). Null means
+  /// the personal library (uses zoteroUserId).
+  selectedLibraryId    String?
+  /// The Zotero collection the player has chosen to play from.
+  selectedCollectionKey String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  papers     Paper[]
+  dailyGames DailyGame[]
+}
+
+/// A paper synced from the player's chosen Zotero collection.
+model Paper {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Zotero item key (unique within a library).
+  zoteroItemKey String
+  /// The library this paper came from: "user" or "group". Null = personal.
+  libraryType   String?
+  /// The numeric id of the source library. Null = personal (zoteroUserId).
+  libraryId     String?
+  title         String
+  /// Citation rendered as "Last1, Last2, ... (YEAR)".
+  citation      String
+  /// Full journal / publication name from Zotero metadata (may be empty).
+  journal       String   @default("")
+  /// Whether usable full text was extracted (eligible for play & clues).
+  hasUsableText Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  clue       Clue?
+  dailyGames DailyGame[]
+
+  @@unique([userId, zoteroItemKey])
+  @@index([userId])
+}
+
+/// LLM-generated clues for a paper, cached after first generation.
+model Clue {
+  id             String   @id @default(cuid())
+  paperId        String   @unique
+  paper          Paper    @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  abstract       String   // clue 1
+  results        String   // clue 2
+  methods        String   // clue 3
+  introDiscussion String  // clue 4
+  journal        String   // clue 5
+  model          String   // which LLM model produced these
+  generatedAt    DateTime @default(now())
+}
+
+enum GameStatus {
+  in_progress
+  won
+  lost
+}
+
+/// One player's game for a given calendar day.
+model DailyGame {
+  id            String     @id @default(cuid())
+  userId        String
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Calendar day in YYYY-MM-DD (player's effective day) form.
+  gameDate      String
+  paperId       String
+  paper         Paper      @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  status        GameStatus @default(in_progress)
+  guessesUsed   Int        @default(0)
+  /// How many clue boxes are currently revealed (starts at 1).
+  cluesRevealed Int        @default(1)
+  /// The five clues generated once when the game starts, reused for the whole
+  /// game: { abstract, results, methods, introDiscussion, journal }. Null until
+  /// generated (e.g. paper still has no readable PDF).
+  clues         Json?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  guesses Guess[]
+
+  @@unique([userId, gameDate])
+  @@index([userId])
+}
+
+/// A single guess within a daily game.
+model Guess {
+  id             String    @id @default(cuid())
+  dailyGameId    String
+  dailyGame      DailyGame @relation(fields: [dailyGameId], references: [id], onDelete: Cascade)
+  guessedPaperId String
+  correct        Boolean
+  createdAt      DateTime  @default(now())
+
+  @@index([dailyGameId])
+}
