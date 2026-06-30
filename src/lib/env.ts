@@ -30,7 +30,7 @@ export const env = {
     return required("GEMINI_API_KEY");
   },
   get geminiModel() {
-    return optional("GEMINI_MODEL", "gemini-2.5-flash");
+    return optional("GEMINI_MODEL", "gemini-3.1-flash-lite");
   },
   get sessionSecret() {
     return required("SESSION_SECRET");
