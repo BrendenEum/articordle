@@ -521,6 +521,10 @@ export default function Game({ username }: { username: string | null }) {
         >
           Sign out
         </button>
+        {" · "}
+        <a href="/privacy" className="underline hover:text-foreground">
+          Privacy
+        </a>
         {" · Website managed by "}
         <a
           href="https://brendeneum.com"

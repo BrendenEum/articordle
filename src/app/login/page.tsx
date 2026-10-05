@@ -124,6 +124,9 @@ function LoginContent() {
           </p>
         </form>
       </div>
+      <a href="/privacy" className="mt-4 text-xs text-muted underline hover:text-foreground">
+        Privacy
+      </a>
     </div>
   );
 }
