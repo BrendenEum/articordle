@@ -444,11 +444,9 @@ export default function Game({ username }: { username: string | null }) {
               Guess
             </button>
           </div>
-          <p className="mt-2 text-xs text-muted">
-            {selected
-              ? "Press Guess to submit."
-              : "Pick one of their papers to enable your guess."}
-          </p>
+          {selected && (
+            <p className="mt-2 text-xs text-muted">Press Guess to submit.</p>
+          )}
         </div>
       )}
 
