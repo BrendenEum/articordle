@@ -34,6 +34,15 @@ const CLUE_LABELS = [
   "Journal",
 ];
 
+/** Lowercase and strip accents so "muller" matches "Müller". */
+function normalizeName(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .trim();
+}
+
 export default function Game({ username }: { username: string | null }) {
   const [game, setGame] = useState<GameState | null>(null);
   const [papers, setPapers] = useState<PaperOption[]>([]);
@@ -87,17 +96,49 @@ export default function Game({ username }: { username: string | null }) {
     return map;
   }, [papers]);
 
+  // Citations are "Last1, Last2, ... (YEAR)"; recover the author last names so
+  // the guess search can match on authors only.
+  const indexedPapers = useMemo(
+    () =>
+      papers.map((p) => {
+        const match = p.citation.match(/^(.*?)\s*\(([^)]*)\)\s*$/);
+        const namePart = match ? match[1] : p.citation;
+        const year = match ? parseInt(match[2], 10) || 0 : 0;
+        const authors = namePart
+          .split(",")
+          .map((n) => normalizeName(n))
+          .filter((n) => n.length > 0 && n !== "unknown");
+        return { paper: p, authors, year };
+      }),
+    [papers],
+  );
+
   const suggestions = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = normalizeName(query);
     if (!q) return [];
-    return papers
-      .filter(
-        (p) =>
-          p.citation.toLowerCase().includes(q) ||
-          p.title.toLowerCase().includes(q),
+    return indexedPapers
+      .map((entry) => {
+        let rank = -1;
+        for (const name of entry.authors) {
+          if (name === q) {
+            rank = 0;
+            break;
+          }
+          if (name.startsWith(q) || name.split(/[\s-]+/).some((w) => w.startsWith(q))) {
+            rank = 1;
+          }
+        }
+        return { ...entry, rank };
+      })
+      .filter((e) => e.rank >= 0)
+      .sort(
+        (a, b) =>
+          a.rank - b.rank ||
+          b.year - a.year ||
+          a.paper.title.localeCompare(b.paper.title),
       )
-      .slice(0, 8);
-  }, [papers, query]);
+      .map((e) => e.paper);
+  }, [indexedPapers, query]);
 
   const finished = game ? game.status !== "in_progress" : false;
 
@@ -366,11 +407,16 @@ export default function Game({ username }: { username: string | null }) {
                     else if (suggestions.length > 0) pick(suggestions[0]);
                   }
                 }}
-                placeholder="Type to search your papers…"
+                placeholder="Type an author's last name to search their papers..."
                 className="w-full rounded-lg border border-border bg-surface px-3 py-3 text-sm outline-none focus:border-accent"
               />
-              {showSuggestions && suggestions.length > 0 && (
-                <ul className="absolute bottom-full z-10 mb-2 max-h-72 w-full overflow-auto rounded-lg border border-border bg-surface-2 shadow-xl">
+              {showSuggestions && !selected && query.trim() && (
+                <ul className="absolute bottom-full z-10 mb-2 max-h-72 w-full overflow-y-auto rounded-lg border border-border bg-surface-2 shadow-xl">
+                  <li className="sticky top-0 border-b border-border bg-surface-2 px-3 py-1.5 text-xs text-muted">
+                    {suggestions.length === 0
+                      ? "No authors match"
+                      : `${suggestions.length} paper${suggestions.length === 1 ? "" : "s"}`}
+                  </li>
                   {suggestions.map((s) => (
                     <li key={s.id}>
                       <button
@@ -401,7 +447,7 @@ export default function Game({ username }: { username: string | null }) {
           <p className="mt-2 text-xs text-muted">
             {selected
               ? "Press Guess to submit."
-              : "Pick a paper from the list to enable your guess."}
+              : "Pick one of their papers to enable your guess."}
           </p>
         </div>
       )}
